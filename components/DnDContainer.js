@@ -2,26 +2,82 @@ import React from 'react'
 import { DropTarget } from 'react-dnd'
 import { ItemTypes } from '../constants/ItemTypes'
 import { v4 as uuidv4 } from 'uuid';
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 import Icon from './DnDIcon'
 import update from 'immutability-helper'
 import classes from './info.module.css'
 const styles = {
   position: 'relative',
 }
-/*
- * backgroundImage: `url(${this.state.imageSrc})`, backgroundPositionX: `${selectedIcon.left}px`, backgroundPositionY: `${selectedIcon.top}px`, backgroundRepeat: 'repeat-y'
- *
-                  <img
-                    src={this.state.imageSrc}
-                    style={{
-                      width: `${imageWidth}px`,
-                      height: `${imageHeight}px`,
-                      clipPath: `circle(100px at ${selectedIcon.left}px ${selectedIcon.top}px)`,
-                      left: `-${Math.abs(selectedIcon.left - 50) }px`
-                    }}
-                    className={classes.infoImage}
-                  />
-*/
+
+class DndContainerComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.imageRef = React.createRef();
+    this.moveIcon = this.moveIcon.bind(this);
+  }
+
+  moveIcon(id, left, top) {
+    this.props.moveIcon(id, left, top);
+  }
+
+  render() {
+    const {onMouseMove, addIcon, openInfoBox, state, connectDropTarget} = this.props;
+    const {icons} = state;
+    const imageWidth = this.imageRef.current && this.imageRef.current.naturalWidth;
+    const imageHeight = this.imageRef.current && this.imageRef.current.naturalHeight;
+
+    return connectDropTarget(
+      <div style={{...styles, minWidth: imageWidth, minHeight: imageHeight}} onMouseMove={onMouseMove} onClick={addIcon}>
+        <img
+          ref={this.imageRef}
+          src={state.imageSrc}
+          className={classes.toolImage}
+        />
+        {Object.keys(icons).map((key) => {
+          const { left, top, title } = icons[key]
+          const isSelected = state.open === key
+          return (
+            <Icon
+              key={key}
+              id={key}
+              left={left}
+              top={top}
+              hideSourceOnDrag
+              isSelected={isSelected}
+              onClick={(e) => {
+                e.stopPropagation();
+                openInfoBox(key);
+              }}
+            />
+          )
+        })}
+      </div>
+    );
+  }
+}
+
+const DndContainer = DropTarget(
+  ItemTypes.ICON,
+  {
+    drop(props, monitor, component) {
+      console.log('component', component);
+      console.log('props', props);
+      if (!component) {
+        return
+      }
+      const item = monitor.getItem()
+      const delta = monitor.getDifferenceFromInitialOffset()
+      const left = Math.round(item.left + delta.x)
+      const top = Math.round(item.top + delta.y)
+      component.moveIcon(item.id, left, top)
+    },
+  },
+  (connect) => ({
+    connectDropTarget: connect.dropTarget(),
+  }),
+)(DndContainerComponent)
 
 class Container extends React.Component {
   constructor() {
@@ -47,15 +103,13 @@ class Container extends React.Component {
     this.onMouseMove = this.onMouseMove.bind(this);
     this.addIcon = this.addIcon.bind(this);
     this.openInfoBox = this.openInfoBox.bind(this);
+    this.moveIcon = this.moveIcon.bind(this);
     this.imageRef = React.createRef();
   }
 
   render() {
-    const { connectDropTarget } = this.props
     const { icons, open } = this.state
     const selectedIcon = icons[open];
-    const imageWidth = this.imageRef.current && this.imageRef.current.naturalWidth;
-    const imageHeight = this.imageRef.current && this.imageRef.current.naturalHeight;
     const imageContainerWidth = 350;
     const imageContainerHeight = 200;
     const iconMargin = 25;
@@ -67,16 +121,14 @@ class Container extends React.Component {
       const deltaX = (imageContainerWidth / 2) - (selectedIcon.left)
       imageX = deltaX - iconMargin;
     }
-    console.log('imageX', imageX);
-    console.log('imageY', imageY);
-    console.log('selectedIcon', selectedIcon);
-    return connectDropTarget(
+    return (
         <div className={classes.infoContainer}>
         <div>
           <div className={classes.infoBox}>
             {selectedIcon ? (
               <>
                 <div className={classes.infoImageContainer}>
+                  <div className={classes.infoRadial} />
                   <img
                     style={{objectPosition: `${imageX}px ${imageY}px`}}
                     src={this.state.imageSrc}
@@ -101,33 +153,17 @@ class Container extends React.Component {
             )}
           </div>
         </div>
-        <div style={{...styles, minWidth: imageWidth, minHeight: imageHeight}} onMouseMove={this.onMouseMove} onClick={this.addIcon}>
-          <img
-            ref={this.imageRef}
-            src={this.state.imageSrc}
-            className={classes.toolImage}
+        <DndProvider backend={HTML5Backend}>
+          <DndContainer
+            onMouseMove={this.onMouseMove}
+            addIcon={this.addIcon}
+            openInfoBox={this.openInfoBox}
+            moveIcon={this.moveIcon}
+            state={this.state}
           />
-          {Object.keys(icons).map((key) => {
-            const { left, top, title } = icons[key]
-            const isSelected = this.state.open === key
-            return (
-              <Icon
-                key={key}
-                id={key}
-                left={left}
-                top={top}
-                hideSourceOnDrag
-                isSelected={isSelected}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  this.openInfoBox(key);
-                }}
-              />
-            )
-          })}
-        </div>,
-      </div>,
-    )
+        </DndProvider>
+      </div>
+    );
   }
 
   onMouseMove(e) {
@@ -158,6 +194,7 @@ class Container extends React.Component {
   }
 
   moveIcon(id, left, top) {
+    console.log('move id', id);
     this.setState(
       update(this.state, {
         icons: {
@@ -170,21 +207,4 @@ class Container extends React.Component {
   }
 }
 
-export default DropTarget(
-  ItemTypes.ICON,
-  {
-    drop(props, monitor, component) {
-      if (!component) {
-        return
-      }
-      const item = monitor.getItem()
-      const delta = monitor.getDifferenceFromInitialOffset()
-      const left = Math.round(item.left + delta.x)
-      const top = Math.round(item.top + delta.y)
-      component.moveIcon(item.id, left, top)
-    },
-  },
-  (connect) => ({
-    connectDropTarget: connect.dropTarget(),
-  }),
-)(Container)
+export default Container;
