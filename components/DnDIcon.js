@@ -12,6 +12,7 @@ const styles = {
   borderRadius: '2rem',
   height: '50px',
   width: '50px',
+  border: '2px solid white',
   cursor: 'pointer',
 }
 
@@ -51,7 +52,6 @@ export default DragSource(
       return { id, left, top }
     },
     endDrag(props) {
-      console.log('props', props);
     },
   },
   (connect, monitor) => ({

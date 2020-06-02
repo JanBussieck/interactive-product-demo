@@ -4,6 +4,7 @@ import { ItemTypes } from '../constants/ItemTypes'
 import { v4 as uuidv4 } from 'uuid';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import PresentationalComponent from './PresentationalComponent';
 import Icon from './DnDIcon'
 import update from 'immutability-helper'
 import classes from './info.module.css'
@@ -84,14 +85,20 @@ class Container extends React.Component {
       imageSrc: "/images/tool.png",
       icons: {
         [uuidv4()]: {
-          top: 20,
-          left: 80,
-          info: {},
+          top: 310,
+          left: 420,
+          info: {
+            title: "Optimaler Gleichlauf",
+            description: "ETEL stellt mit Linear- und Torquemotoren sowie dem AccurET Controller sowohl hochgenaue Direktantriebe für Bewegungen im Nanometerbereich als auch drehmomentstarke Systeme für industrielle Anwendungen vor."
+          },
         },
         [uuidv4()]: {
-          top: 180,
-          left: 20,
-          info: {},
+          top: 84,
+          left: 112,
+          info: {
+            title: "Digitaler Messtaster",
+            description: "Klassisch über Kabel oder drahtlos per Funk: HEIDENHAIN und NUMERIK JENA machen die Daten von Messtastern über die Auswerte-Elektronik GAGE-CHEK 2000 oder das Funkmodul SCM (Smart Communication Modul) in digitalen Netzwerken nutzbar."
+          },
         },
       },
       mouseX: 0,
@@ -107,6 +114,7 @@ class Container extends React.Component {
 
   render() {
     const { icons, open } = this.state
+    console.log('icons', icons);
     const selectedIcon = icons[open];
     const imageContainerWidth = 350;
     const imageContainerHeight = 200;
@@ -121,7 +129,7 @@ class Container extends React.Component {
     }
     return (
       <>
-      <h3>Die Input-Komponente</h3>
+      <h3>Die Input-Komponente:</h3>
       <hr style={{marginBottom: '4rem'}}/>
       <div className={classes.infoContainer}>
         <div>
@@ -184,6 +192,9 @@ class Container extends React.Component {
           />
         </DndProvider>
       </div>
+      <h3>Die Anzeige-Komponente:</h3>
+      <hr style={{marginBottom: '4rem'}}/>
+      <PresentationalComponent icons={icons} imageSrc={this.state.imageSrc} />
       </>
     );
   }
