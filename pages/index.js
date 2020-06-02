@@ -1,7 +1,6 @@
 import Head from 'next/head'
 import Layout, { siteTitle } from '../components/layout'
 import Container from '../components/DnDContainer'
-import { getSortedPostsData } from '../lib/posts'
 import utilStyles from '../styles/utils.module.css'
 
 export default function Home({ allPostsData }) {
@@ -16,10 +15,7 @@ export default function Home({ allPostsData }) {
 }
 
 export async function getServerSideProps(context) {
-  const allPostsData = getSortedPostsData()
   return {
-    props: {
-      allPostsData
-    }
-  }
+    props: {}
+  };
 }
