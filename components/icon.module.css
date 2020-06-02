@@ -1,0 +1,16 @@
+.iconContainer {
+  background-color: #B5BD00;
+  transition: background-color 0.5s ease-in;
+}
+
+.iconContainerSelected {
+  background-color: #8c8d8b;
+}
+
+.icon {
+  transition: transform 0.2s ease-in;
+}
+
+.iconSelected {
+  transform: rotate(45deg);
+}
