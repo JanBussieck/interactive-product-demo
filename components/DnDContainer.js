@@ -62,8 +62,6 @@ const DndContainer = DropTarget(
   ItemTypes.ICON,
   {
     drop(props, monitor, component) {
-      console.log('component', component);
-      console.log('props', props);
       if (!component) {
         return
       }
@@ -122,7 +120,10 @@ class Container extends React.Component {
       imageX = deltaX - iconMargin;
     }
     return (
-        <div className={classes.infoContainer}>
+      <>
+      <h3>Die Input-Komponente</h3>
+      <hr style={{marginBottom: '4rem'}}/>
+      <div className={classes.infoContainer}>
         <div>
           <div className={classes.infoBox}>
             {selectedIcon ? (
@@ -135,9 +136,29 @@ class Container extends React.Component {
                     className={classes.infoImage}
                   />
                 </div>
-                <div className={classes.infoText}>
-                  <input type="text" className={classes.input}  placeholder='Titel' />
-                  <textarea className={classes.input} rows={3} placeholder='Beschreibung' />
+                <div className={classes.infoText} key={open}>
+                  <input
+                    type="text"
+                    className={classes.input}
+                    value={selectedIcon.info.title}
+                    onChange={(ev) => {
+                      this.handleInfoChange({id: open, info: {title: ev.target.value}});
+                    }}
+                    placeholder='Titel'
+                  />
+                  <textarea
+                    className={classes.input}
+                    rows={3}
+                    value={selectedIcon.info.description}
+                    onChange={(ev) => {
+                      this.handleInfoChange({id: open, info: {description: ev.target.value}});
+                    }}
+                    placeholder='Beschreibung'
+                  />
+                  <div className={classes.btnGroup}>
+                    <small className={classes.remove} onClick={() => this.removeIcon(open)}>Hightlight entfernen</small>
+                    <button className={classes.btn} onClick={() => this.closeInfoBox(open)}>Speichern</button>
+                  </div>
                 </div>
               </>
             ) : (
@@ -163,6 +184,7 @@ class Container extends React.Component {
           />
         </DndProvider>
       </div>
+      </>
     );
   }
 
@@ -178,9 +200,37 @@ class Container extends React.Component {
       update(this.state, {
         icons: {$merge: {
           [uuidv4()]: {
-            left: (this.state.mouseX - 25), top: (this.state.mouseY - 25)
+            left: (this.state.mouseX - 25), top: (this.state.mouseY - 25), info: {}
           },
         }},
+      }),
+    )
+  }
+
+  handleInfoChange({id, info}) {
+    this.setState(
+      update(this.state, {
+        icons: {
+          [id]: {
+            info: { $merge: info }
+          },
+        },
+      }),
+    )
+  }
+
+  removeIcon(id) {
+    this.setState(
+      update(this.state, {
+        icons: {$unset: [id]}
+      }),
+    )
+  }
+
+  closeInfoBox(id) {
+    this.setState(
+      update(this.state, {
+        open: { $set: null }
       }),
     )
   }
@@ -194,7 +244,6 @@ class Container extends React.Component {
   }
 
   moveIcon(id, left, top) {
-    console.log('move id', id);
     this.setState(
       update(this.state, {
         icons: {
